@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Api.Extensions
 {
-    public class AppSettings
+    public class TokenConfig
     {
         public string Secret { get; set; }
         public int ExpiracaoHoras { get; set; }

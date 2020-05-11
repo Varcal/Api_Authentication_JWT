@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Api.Configurations
 {
@@ -24,18 +25,27 @@ namespace Api.Configurations
                 .AddDefaultTokenProviders();
 
             //JWT
-            var appsettingsSection = configuration.GetSection("AppSettings");
-            services.Configure<AppSettings>(appsettingsSection);
-
-            var appSettings = configuration.Get<AppSettings>();
+            var appSettings = configuration.GetSection("TokenConfig").Get<TokenConfig>();
+            services.AddSingleton(appSettings);
             var key = Encoding.ASCII.GetBytes(appSettings.Secret);
 
             services.AddAuthentication(x =>
             {
                 x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer();
-
+            }).AddJwtBearer(config =>
+            {
+                config.RequireHttpsMetadata = false;
+                config.SaveToken = true;
+                config.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = true,
+                    ValidAudience =  appSettings.ValidadoEm,
+                    ValidIssuer = appSettings.Emissor
+                };
+            });
 
             return services;
         }
